@@ -1,0 +1,21 @@
+[project]
+name = "horse"
+version = "0.1.0"
+description = "Generate a loopable galloping-horse animation as a 72x16-per-frame sprite sheet"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Pete Richardson", email = "pete@peterichardson.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "pillow>=12.3.0",
+]
+
+[project.scripts]
+horse = "horse:main"
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"
