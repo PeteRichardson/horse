@@ -17,6 +17,8 @@ import math
 
 from PIL import Image, ImageChops, ImageDraw
 
+from . import anim
+
 W, H = 72, 16
 SS = 8  # supersample factor
 GROUND = 15.4  # y of the hoof contact line
@@ -353,16 +355,24 @@ def render(t, flip, ground, mono):
 
 # ------------------------------------------------------------------- main ---
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-n", "--frames", type=int, default=12)
-    ap.add_argument("-o", "--out", default="horse_sheet.png")
-    ap.add_argument("--layout", choices=["row", "column", "grid"], default="row")
+    ap = argparse.ArgumentParser(
+        description="Generate a loopable galloping-horse animation as a 72x16 sprite sheet.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    ap.add_argument(
+        "-n", "--frames", type=int, default=12, help="frames sampled around one stride"
+    )
+    ap.add_argument("-o", "--out", default="horse_sheet.png", help="sprite sheet output path")
+    ap.add_argument(
+        "--layout", choices=["row", "column", "grid"], default="row", help="sheet arrangement"
+    )
     ap.add_argument("--cols", type=int, default=4, help="columns when --layout grid")
-    ap.add_argument("--ground", action="store_true", help="scrolling ground + contact")
+    ap.add_argument("--ground", action="store_true", help="scrolling ground + contact patches")
     ap.add_argument("--mono", action="store_true", help="original white silhouette")
     ap.add_argument("--flip", action="store_true", help="face right instead of left")
     ap.add_argument("--gif", default=None, help="also write a preview GIF")
-    ap.add_argument("--fps", type=float, default=15.0)
+    ap.add_argument("--anim", default=None, help="also write a BUSY Bar .anim")
+    ap.add_argument("--fps", type=float, default=15.0, help="frame rate for --gif and --anim")
     args = ap.parse_args()
 
     n = args.frames
@@ -395,6 +405,20 @@ def main():
             loop=0,
         )
         print(f"{args.gif}: preview at {args.fps} fps")
+
+    if args.anim:
+        # The .anim carries the frames themselves, not the sheet: the bar
+        # refuses to draw any image bigger than the panel, so the sheet is for
+        # you to look at and this is the thing the device can actually play.
+        fps = max(1, min(255, round(args.fps)))
+        data = anim.encode(frames, fps)
+        with open(args.anim, "wb") as f:
+            f.write(data)
+        raw = n * W * H * 3
+        print(
+            f"{args.anim}: {n} frames at {fps} fps, {len(data)} bytes "
+            f"({raw / len(data):.1f}x smaller than raw)"
+        )
 
 
 if __name__ == "__main__":
